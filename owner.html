@@ -1,0 +1,370 @@
+<title>Delicious Hand Owner</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta charset="utf-8">
+<style>
+:root { --bg: #F5F7F2; --surface: #FFFFFF; --soft: #EBF0E6; --ink: #16261D; --muted: #5B6A60; --line: #D9E0D5; --accent: #B42318; --accent-ink: #FFFFFF; --leaf: #1E7B45; --warn: #8A5A00; color-scheme: light; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #0F1712; --surface: #17211B; --soft: #1E2A23; --ink: #EEF3EC; --muted: #9DABA2; --line: #2B3830; --accent: #F0705B; --accent-ink: #1C0A06; --leaf: #52C47F; --warn: #E7B04A; color-scheme: dark; }
+}
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 16px 40px; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 12px; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; padding: 12px 16px; }
+button.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+input, select { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 9px 10px; min-width: 0; }
+.wrap { max-width: 760px; margin: 0 auto; }
+h1 { font-size: 1.4rem; margin: 0; }
+h1 span { color: var(--accent); }
+h3 { margin: 18px 0 6px; font-size: .95rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.muted { color: var(--muted); font-size: .88rem; margin: 2px 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; max-width: 380px; margin: 40px auto; display: grid; gap: 10px; }
+.top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; justify-content: space-between; margin-bottom: 12px; }
+.badge { background: var(--accent); color: var(--accent-ink); border-radius: 999px; padding: 3px 10px; font-size: .85rem; font-weight: 600; }
+.banner { background: var(--soft); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; color: var(--warn); font-size: .9rem; margin-bottom: 12px; }
+.tabs { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 8px; }
+.msg { min-height: 1.4em; color: var(--leaf); font-weight: 500; margin: 8px 0 0; }
+.msg.bad { color: var(--accent); }
+.order { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; margin-bottom: 12px; display: grid; gap: 6px; }
+.order.done { opacity: .55; }
+.order.new { border-color: var(--accent); }
+.row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.pill { font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; border-radius: 999px; padding: 2px 9px; background: var(--soft); }
+.pill.new { background: var(--accent); color: var(--accent-ink); }
+.pill.ready, .pill.done { background: var(--leaf); color: var(--accent-ink); }
+.items { margin: 4px 0; padding-left: 18px; }
+.items span, .line { color: var(--muted); }
+.total { font-weight: 700; font-size: 1.05rem; margin: 4px 0 0; }
+.notes { color: var(--warn); margin: 0; }
+.btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.prow { display: grid; grid-template-columns: 1fr 96px auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.prow small { display: block; color: var(--muted); }
+.pin { width: 96px; font-variant-numeric: tabular-nums; }
+.chk { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; white-space: nowrap; }
+.offer { display: grid; gap: 8px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.orow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.ot { width: 100%; }
+.otval { width: 110px; }
+.field { display: grid; gap: 4px; margin-bottom: 12px; max-width: 420px; }
+.field label { font-size: .85rem; font-weight: 600; }
+.ghost { margin-top: 10px; }
+.login-err { color: var(--accent); min-height: 1.2em; margin: 0; }
+</style>
+
+<div class="wrap">
+  <section id="login" class="card" hidden>
+    <h1>Delicious Hand <span>Owner</span></h1>
+    <p class="muted">Sign in to see orders and change prices and offers.</p>
+    <form id="loginForm" style="display:grid;gap:10px">
+      <input id="lEmail" type="email" autocomplete="username" placeholder="Owner email" required>
+      <input id="lPass" type="password" autocomplete="current-password" placeholder="Password" required>
+      <button class="primary" type="submit">Sign in</button>
+      <p class="login-err" id="loginErr" role="alert"></p>
+    </form>
+  </section>
+
+  <section id="main" hidden>
+    <header class="top">
+      <h1>Delicious Hand <span>Owner</span></h1>
+      <div style="display:flex;gap:8px;align-items:center"><span id="newCount" class="badge" hidden></span><button id="logout" type="button">Log out</button></div>
+    </header>
+    <div id="demoBanner" class="banner" hidden>Test mode: data is saved only in this browser. Add your Firebase keys to use it for real orders and to share prices with customers.</div>
+    <nav class="tabs" aria-label="Owner sections">
+      <button type="button" data-tab="orders" class="on">Orders</button>
+      <button type="button" data-tab="prices">Prices</button>
+      <button type="button" data-tab="offers">Offers</button>
+      <button type="button" data-tab="settings">Settings</button>
+    </nav>
+
+    <section id="tab-orders">
+      <div id="orders"></div>
+    </section>
+
+    <section id="tab-prices" hidden>
+      <p class="muted">Change a price or switch a dish off. Customers see the change straight away.</p>
+      <div id="prices"></div>
+      <button class="primary" type="button" id="savePrices" style="margin-top:12px">Save prices</button>
+      <p class="msg" id="pricesMsg"></p>
+    </section>
+
+    <section id="tab-offers" hidden>
+      <p class="muted">Offers apply automatically. If more than one is active, customers get the best one for their order.</p>
+      <div id="offers"></div>
+      <button type="button" id="addOffer" class="ghost">+ Add offer</button>
+      <button class="primary" type="button" id="saveOffers" style="margin-top:12px;display:block">Save offers</button>
+      <p class="msg" id="offersMsg"></p>
+    </section>
+
+    <section id="tab-settings" hidden>
+      <div class="field"><label for="sTiffin">Tiffin box charge (₹)</label><input id="sTiffin" type="number" min="0" step="1"></div>
+      <div class="field"><label for="sGst">GST (%)</label><input id="sGst" type="number" min="0" step="0.5"></div>
+      <div class="field"><label for="sUpi">UPI ID for payments</label><input id="sUpi" type="text"></div>
+      <div class="field"><label for="sUpiName">Name shown in UPI apps</label><input id="sUpiName" type="text"></div>
+      <button class="primary" type="button" id="saveSettings">Save settings</button>
+      <p class="msg" id="settingsMsg"></p>
+    </section>
+  </section>
+</div>
+
+<script>
+/* ---- Shared shop data: Firebase when FIREBASE_CONFIG is filled in, otherwise this browser only (testing) ---- */
+var FIREBASE_CONFIG = null; /* paste the config object from the Firebase console here */
+var FB_VERSION = "10.12.2";
+var OWNER_EMAIL = "delicioushand11814@gmail.com"; /* the owner login email, same as in owner.html */
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+function loadScripts(urls) {
+  return urls.reduce(function (p, u) {
+    return p.then(function () {
+      return new Promise(function (res, rej) {
+        var s = document.createElement("script"); s.src = u; s.onload = res; s.onerror = rej; document.head.appendChild(s);
+      });
+    });
+  }, Promise.resolve());
+}
+var DB = (function () {
+  var fs = null, au = null, demo = true, ready = null, subs = {};
+  var DEF = { menu: {}, settings: {}, orders: [] };
+  function clone(v) { return JSON.parse(JSON.stringify(v)); }
+  function lsGet(k) { try { var v = localStorage.getItem("dh_" + k); return v ? JSON.parse(v) : clone(DEF[k]); } catch (e) { return clone(DEF[k]); } }
+  function lsSet(k, v) { try { localStorage.setItem("dh_" + k, JSON.stringify(v)); } catch (e) {} }
+  function emit(k) { (subs[k] || []).forEach(function (fire) { fire(); }); }
+  function sub(k, fire) { (subs[k] = subs[k] || []).push(fire); fire(); }
+  return {
+    get demo() { return demo; },
+    init: function () {
+      if (!ready) {
+        ready = !FIREBASE_CONFIG ? Promise.resolve(false) : loadScripts([
+          "https://www.gstatic.com/firebasejs/" + FB_VERSION + "/firebase-app-compat.js",
+          "https://www.gstatic.com/firebasejs/" + FB_VERSION + "/firebase-firestore-compat.js",
+          "https://www.gstatic.com/firebasejs/" + FB_VERSION + "/firebase-auth-compat.js"
+        ]).then(function () {
+          if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+          fs = firebase.firestore(); au = firebase.auth(); demo = false; return true;
+        });
+      }
+      return ready;
+    },
+    watch: function (k, f) {
+      if (demo) return sub(k, function () { f(lsGet(k)); });
+      if (k === "orders") {
+        return fs.collection("orders").orderBy("createdAt", "desc").limit(200).onSnapshot(function (s) {
+          f(s.docs.map(function (d) { return Object.assign({ id: d.id }, d.data()); }));
+        });
+      }
+      return fs.collection("shop").doc(k).onSnapshot(function (s) { f(s.exists ? s.data() : clone(DEF[k])); });
+    },
+    save: function (k, partial) {
+      if (demo) { var cur = lsGet(k); Object.keys(partial).forEach(function (x) { cur[x] = partial[x]; }); lsSet(k, cur); emit(k); return Promise.resolve(true); }
+      return fs.collection("shop").doc(k).set(partial, { merge: true }).then(function () { return true; });
+    },
+    addOrder: function (o) {
+      o.status = "new";
+      if (demo) { var arr = lsGet("orders"); o.id = "L" + Date.now(); o.createdAt = new Date().toISOString(); arr.unshift(o); lsSet("orders", arr); emit("orders"); return Promise.resolve(true); }
+      return fs.collection("orders").add(Object.assign({}, o, { createdAt: firebase.firestore.FieldValue.serverTimestamp() })).then(function () { return true; });
+    },
+    setStatus: function (id, status) {
+      if (demo) { var arr = lsGet("orders"); arr.forEach(function (x) { if (x.id === id) x.status = status; }); lsSet("orders", arr); emit("orders"); return Promise.resolve(); }
+      return fs.collection("orders").doc(id).update({ status: status });
+    },
+    login: function (email, pw) {
+      if (demo) { localStorage.setItem("dh_owner", "1"); emit("auth"); return Promise.resolve(); }
+      return au.signInWithEmailAndPassword(email, pw);
+    },
+    logout: function () {
+      if (demo) { localStorage.removeItem("dh_owner"); emit("auth"); return Promise.resolve(); }
+      return au.signOut();
+    },
+    onAuth: function (f) {
+      if (demo) return sub("auth", function () { f(localStorage.getItem("dh_owner") === "1"); });
+      au.onAuthStateChanged(function (u) { f(!!u && u.email === OWNER_EMAIL); });
+    }
+  };
+})();
+
+/* Dishes, same ids and default prices as the customer page. */
+var ITEMS = [{ id: "t1", svc: "tiffin", name: "Bread Jam", base: 20 }, { id: "t2", svc: "tiffin", name: "Sandwich", base: 40 }, { id: "t3", svc: "tiffin", name: "Panner Chilli", base: 70 }, { id: "t4", svc: "tiffin", name: "Chicken Chilli", base: 70 }, { id: "t5", svc: "tiffin", name: "Fry Rice", base: 40 }, { id: "l1", svc: "lunch", name: "Panner Chilli", base: 70 }, { id: "l2", svc: "lunch", name: "Matar Panner", base: 80 }, { id: "l3", svc: "lunch", name: "Fry Rice", base: 40 }, { id: "l4", svc: "lunch", name: "Egg Kadhi", base: 50 }, { id: "l5", svc: "lunch", name: "Chicken Chilli", base: 70 }, { id: "d1", svc: "dinner", name: "Soya Malia Tikka", base: 75 }, { id: "d2", svc: "dinner", name: "Soya Tandoori Tikka", base: 75 }, { id: "d3", svc: "dinner", name: "Rumali Roti", base: 20 }, { id: "d4", svc: "dinner", name: "Afgani Chicken", base: 95 }, { id: "d5", svc: "dinner", name: "Chicken Kabab (Butter and Cream)", base: 90 }, { id: "d6", svc: "dinner", name: "Tandoori Chicken", base: 99 }];
+var SVC = { tiffin: "Tiffin", lunch: "Lunch", dinner: "Dinner" };
+var STATUSES = [["new", "New"], ["preparing", "Preparing"], ["ready", "Ready"], ["done", "Done"]];
+var orders = [], menu = {}, settings = {}, offers = [];
+var started = false, pricesDirty = false, offersDirty = false, settingsDirty = false;
+var $ = function (id) { return document.getElementById(id); };
+function rupee(n) { return "₹" + Math.round(Number(n) || 0).toLocaleString("en-IN"); }
+function when(c) {
+  var d = c && c.toDate ? c.toDate() : (c ? new Date(c) : new Date());
+  return d.toLocaleString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+function msg(el, text, bad) { el.textContent = text; el.className = bad ? "msg bad" : "msg"; }
+function fail(el) { msg(el, "Could not save. Check your internet connection and try again.", true); }
+
+/* ---- orders ---- */
+function renderOrders() {
+  var fresh = orders.filter(function (o) { return o.status === "new"; }).length;
+  $("newCount").textContent = fresh + " new";
+  $("newCount").hidden = !fresh;
+  var html = orders.length ? "" : '<p class="muted">No orders yet. New orders appear here as customers place them.</p>';
+  orders.forEach(function (o) {
+    var st = o.status || "new";
+    var items = (o.items || []).map(function (i) {
+      return "<li>" + i.qty + " × " + esc(i.name) + " <span>(" + esc(SVC[i.svc] || i.svc) + ") " + rupee(i.qty * i.price) + "</span></li>";
+    }).join("");
+    html += '<article class="order ' + st + '">' +
+      '<div class="row"><b>' + esc(o.no) + '</b><span class="pill ' + st + '">' + esc(STATUSES.filter(function (s) { return s[0] === st; })[0] ? STATUSES.filter(function (s) { return s[0] === st; })[0][1] : st) + '</span></div>' +
+      '<p class="muted">' + esc(when(o.createdAt)) + " · " + esc(o.type) + " · " + esc(o.payment) + "</p>" +
+      '<p><b>' + esc(o.name) + '</b> · <a href="tel:' + esc(o.phone) + '">' + esc(o.phone) + "</a></p>" +
+      '<ul class="items">' + items + "</ul>" +
+      (o.offer ? '<p class="line">' + esc(o.offer) + " −" + rupee(o.discount) + "</p>" : "") +
+      (o.tiffinBox ? '<p class="line">Tiffin box ' + rupee(o.tiffinBox) + "</p>" : "") +
+      (o.gst ? '<p class="line">GST ' + rupee(o.gst) + "</p>" : "") +
+      '<p class="total">Total ' + rupee(o.total) + "</p>" +
+      (o.notes ? '<p class="notes">Notes: ' + esc(o.notes) + "</p>" : "") +
+      '<div class="btns">' + STATUSES.map(function (s) {
+        return '<button type="button" data-id="' + esc(o.id) + '" data-s="' + s[0] + '"' + (s[0] === st ? ' class="on"' : "") + ">" + s[1] + "</button>";
+      }).join("") + "</div>" +
+      "</article>";
+  });
+  $("orders").innerHTML = html;
+}
+$("orders").addEventListener("click", function (e) {
+  var b = e.target.closest("button[data-s]");
+  if (b) DB.setStatus(b.getAttribute("data-id"), b.getAttribute("data-s")).catch(function () { alert("Could not update. Check your connection."); });
+});
+
+/* ---- prices ---- */
+function renderPrices() {
+  var ov = menu.overrides || {}, html = "";
+  Object.keys(SVC).forEach(function (s) {
+    html += "<h3>" + SVC[s] + "</h3>";
+    ITEMS.filter(function (i) { return i.svc === s; }).forEach(function (i) {
+      var o = ov[i.id] || {};
+      var price = typeof o.price === "number" ? o.price : i.base;
+      html += '<div class="prow" data-id="' + i.id + '"><div><b>' + esc(i.name) + "</b><small>Default " + rupee(i.base) + "</small></div>" +
+        '<input class="pin" type="number" min="0" step="1" value="' + price + '" aria-label="Price of ' + esc(i.name) + '">' +
+        '<label class="chk"><input class="pav" type="checkbox"' + (o.available !== false ? " checked" : "") + "> On menu</label></div>";
+    });
+  });
+  $("prices").innerHTML = html;
+}
+$("prices").addEventListener("input", function () { pricesDirty = true; });
+$("prices").addEventListener("change", function () { pricesDirty = true; });
+$("savePrices").addEventListener("click", function () {
+  var out = {}, bad = false;
+  document.querySelectorAll(".prow").forEach(function (r) {
+    var v = Number(r.querySelector(".pin").value);
+    if (!(v >= 0) || v !== Math.floor(v)) { bad = true; return; }
+    out[r.getAttribute("data-id")] = { price: v, available: r.querySelector(".pav").checked };
+  });
+  if (bad) return msg($("pricesMsg"), "Enter whole rupee prices, 0 or more.", true);
+  DB.save("menu", { overrides: out }).then(function () {
+    pricesDirty = false; msg($("pricesMsg"), "Saved. Customers see the new prices now.");
+  }, function () { fail($("pricesMsg")); });
+});
+
+/* ---- offers ---- */
+var OFFER_APPLIES = [["all", "Whole order"], ["tiffin", "Tiffin only"], ["lunch", "Lunch only"], ["dinner", "Dinner only"]];
+function drawOffers() {
+  var html = offers.length ? "" : '<p class="muted">No offers yet. Tap "Add offer" to create one.</p>';
+  offers.forEach(function (o, n) {
+    html += '<div class="offer" data-n="' + n + '">' +
+      '<input class="ot" placeholder="Offer name, e.g. Lunch 10% off" value="' + esc(o.title) + '">' +
+      '<div class="orow"><select class="ottype"><option value="percent"' + (o.type === "percent" ? " selected" : "") + '>% off</option><option value="flat"' + (o.type === "flat" ? " selected" : "") + '>₹ off</option></select>' +
+      '<input class="otval" type="number" min="0" step="1" value="' + Number(o.value || 0) + '">' +
+      '<select class="otapp">' + OFFER_APPLIES.map(function (a) { return '<option value="' + a[0] + '"' + (o.appliesTo === a[0] ? " selected" : "") + ">" + a[1] + "</option>"; }).join("") + "</select></div>" +
+      '<div class="orow"><label class="chk"><input class="otact" type="checkbox"' + (o.active ? " checked" : "") + "> Active</label><button class=\"del\" type=\"button\">Delete</button></div>" +
+      "</div>";
+  });
+  $("offers").innerHTML = html;
+}
+function readOffers() {
+  offers = Array.prototype.map.call(document.querySelectorAll(".offer"), function (el) {
+    return {
+      id: el.getAttribute("data-id") || ("o" + Date.now() + Math.random().toString(36).slice(2, 6)),
+      title: el.querySelector(".ot").value.trim(),
+      type: el.querySelector(".ottype").value,
+      value: Number(el.querySelector(".otval").value),
+      appliesTo: el.querySelector(".otapp").value,
+      active: el.querySelector(".otact").checked
+    };
+  });
+}
+function renderOffers() {
+  if (offersDirty) return;
+  offers = (settings.offers || []).map(function (o) { return Object.assign({}, o); });
+  drawOffers();
+}
+$("offers").addEventListener("input", function () { offersDirty = true; });
+$("offers").addEventListener("change", function () { offersDirty = true; });
+$("offers").addEventListener("click", function (e) {
+  var b = e.target.closest("button.del");
+  if (!b) return;
+  readOffers(); offers.splice(Number(b.closest(".offer").getAttribute("data-n")), 1);
+  offersDirty = true; drawOffers();
+});
+$("addOffer").addEventListener("click", function () {
+  readOffers();
+  offers.push({ id: "o" + Date.now(), title: "", type: "percent", value: 10, appliesTo: "all", active: true });
+  offersDirty = true; drawOffers();
+});
+$("saveOffers").addEventListener("click", function () {
+  readOffers();
+  var bad = offers.some(function (o) { return !o.title || !(o.value > 0); });
+  if (bad) return msg($("offersMsg"), "Each offer needs a name and a value above 0.", true);
+  DB.save("settings", { offers: offers }).then(function () {
+    offersDirty = false; msg($("offersMsg"), "Saved. Offers apply to new orders now.");
+  }, function () { fail($("offersMsg")); });
+});
+
+/* ---- settings ---- */
+function renderSettings() {
+  if (settingsDirty) return;
+  $("sTiffin").value = settings.tiffinBox != null ? settings.tiffinBox : 20;
+  $("sGst").value = settings.gstPercent != null ? settings.gstPercent : 0;
+  $("sUpi").value = settings.upiId || "8298163291@ptyes";
+  $("sUpiName").value = settings.upiName || "Mr Abdul Ahad";
+}
+["sTiffin", "sGst", "sUpi", "sUpiName"].forEach(function (id) {
+  $(id).addEventListener("input", function () { settingsDirty = true; });
+});
+$("saveSettings").addEventListener("click", function () {
+  var tiffin = Number($("sTiffin").value), gst = Number($("sGst").value);
+  if (!(tiffin >= 0) || !(gst >= 0)) return msg($("settingsMsg"), "Enter 0 or more.", true);
+  DB.save("settings", {
+    tiffinBox: tiffin, gstPercent: gst,
+    upiId: $("sUpi").value.trim(), upiName: $("sUpiName").value.trim()
+  }).then(function () {
+    settingsDirty = false; msg($("settingsMsg"), "Saved. Customers see the new charges now.");
+  }, function () { fail($("settingsMsg")); });
+});
+
+/* ---- tabs, login, start ---- */
+document.querySelectorAll(".tabs button").forEach(function (b) {
+  b.addEventListener("click", function () {
+    var tab = b.getAttribute("data-tab");
+    document.querySelectorAll(".tabs button").forEach(function (x) { x.classList.toggle("on", x === b); });
+    ["orders", "prices", "offers", "settings"].forEach(function (n) { $("tab-" + n).hidden = n !== tab; });
+  });
+});
+$("loginForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+  $("loginErr").textContent = "";
+  DB.login($("lEmail").value.trim(), $("lPass").value).catch(function () {
+    $("loginErr").textContent = "Wrong email or password.";
+  });
+});
+$("logout").addEventListener("click", function () { DB.logout(); });
+
+DB.init().then(function () {
+  $("demoBanner").hidden = !DB.demo;
+  if (!DB.demo) $("lEmail").value = OWNER_EMAIL;
+  DB.onAuth(function (ok) {
+    $("login").hidden = ok;
+    $("main").hidden = !ok;
+    if (ok && !started) {
+      started = true;
+      DB.watch("orders", function (o) { orders = o || []; renderOrders(); });
+      DB.watch("menu", function (m) { menu = m || {}; if (!pricesDirty) renderPrices(); });
+      DB.watch("settings", function (s) { settings = s || {}; renderSettings(); renderOffers(); });
+    }
+  });
+});
+</script>
